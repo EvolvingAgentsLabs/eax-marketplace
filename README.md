@@ -2,7 +2,7 @@
 
 **(Evolving Agents Experimental Marketplace)**
 
-An experimental protocol for dynamic agent discovery and task allocation.
+The economic layer for LLMunix agent networks - enabling task auctions and competitive bidding between specialized agents.
 
 <p align="center">
   <a href="https://github.com/EvolvingAgentsLabs/eax-marketplace/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License"></a>
@@ -10,158 +10,234 @@ An experimental protocol for dynamic agent discovery and task allocation.
   <a href="#"><img src="https://img.shields.io/badge/status-alpha_experiment-orange.svg" alt="Status"></a>
 </p>
 
-> 🌐 **Part of the [Evolving Agents Labs](https://evolvingagentslabs.github.io) Research Initiative**
->
-> This project explores how an agent system, like one defined by the [llmunix-spec](https://github.com/EvolvingAgentsLabs/llmunix-spec), can dynamically assemble its own capabilities instead of relying on a fixed set of tools.
+> 🌐 **Part of [Evolving Agents Labs](https://evolvingagentslabs.github.io)** | 🔬 [View All Experiments](https://evolvingagentslabs.github.io#experiments) | 📖 [Project Details](https://evolvingagentslabs.github.io/experiments/eax-marketplace.html)
 
 ---
 
 ## ⚠️ Experimental Research Project
 
-**Important**: This is an early-stage research prototype exploring dynamic agent collaboration. It should be treated as research material, not a production-ready system. This project will remain permanently in alpha status as we explore the future of adaptive agent architecture.
+**Important**: This is an experimental research prototype exploring decentralized agent collaboration concepts. It should be treated as research material rather than a production-ready system. This project will remain permanently in alpha status as ongoing research.
 
 ---
 
-## The Research Hypothesis: Beyond Hardcoded Agent Chains
+## The Problem (Our Research Hypothesis)
 
-Modern agentic systems are often built with rigid, pre-defined architectures. A `Planner` is hardcoded to call a `Summarizer`, which is hardcoded to call a `Writer`. This is brittle and inefficient.
+In networks of specialized LLMunix agents, we need economic mechanisms for:
+- **Resource Allocation**: How do agents compete for tasks they're best suited for?
+- **Price Discovery**: What's the fair cost for different cognitive tasks?
+- **Quality Incentives**: How do we reward high-performing agents?
+- **Market Efficiency**: Can competition drive better agent specialization?
+- **Resilience**: How do we handle agent failures without system collapse?
 
-Our research, inspired by the adaptive principles in `llmunix`, investigates a new paradigm: **Can an agent system discover and select the optimal "worker" agent for a given task from a competitive, open ecosystem?**
+EAX Marketplace implements a decentralized auction system where LLMunix agents bid on tasks based on their capabilities, creating an economic layer for agent collaboration.
 
-This hypothesis addresses several key limitations of static systems:
-- **Rigid Architectures:** Fixed agent relationships prevent adaptability.
-- **Lack of Discovery:** A system cannot find or utilize a better, cheaper, or more specialized agent that may exist.
-- **Single Points of Failure:** If a hardcoded agent fails, the entire workflow breaks.
-- **No Optimization:** The system cannot dynamically re-allocate tasks for better performance or cost.
+## The Experiment: Economic Coordination for Agent Networks
 
-## The Experiment: A Marketplace for Cognitive Work
+EAX Marketplace runs as a specialized LLMunix "Auctioneer" agent that facilitates economic coordination:
 
-EAX Marketplace is our experimental protocol for **dynamic capability sourcing**. It defines a simple, open auction mechanism where an "Orchestrator" agent can find the best "Worker" agent for a specific job.
-
-### The Auction Flow
-An Orchestrator doesn't call a specific tool; it announces a need.
+### The Marketplace Agent Architecture
 
 ```
-1. 📢 TASK ANNOUNCEMENT → 2. 💰 BIDDING → 3. 🏆 SELECTION → 4. ⚡ EXECUTION
-   Orchestrator          Worker Agents      Best Bid         Task is delegated
-   describes a need      propose to help    is chosen        to the winner
+1. 📢 TASK ARRIVES → 2. 💰 BROADCAST RFB → 3. 🏆 EVALUATE BIDS → 4. ⚡ AWARD CONTRACT
+   From Router        To Worker Agents      Compare offers        Notify winner
+   or User           via message bus        using criteria        to begin work
 ```
 
-### How It Works: A Conceptual Example
+### How the Marketplace Agent Works
 
-#### The Orchestrator's Perspective
-```python
-from eax_marketplace import Orchestrator, Task, BidEvaluator
+The EAX Marketplace is itself a LLMunix instance with specialized firmware:
 
-# Initialize an orchestrator with a selection strategy
-orchestrator = Orchestrator(evaluator=BidEvaluator.BestValue()) # BestValue balances cost and confidence
+```yaml
+# EAX Marketplace's GEMINI.md
+agent_role: "Economic Coordinator / Auctioneer"
+primary_goal: "Facilitate competitive bidding for tasks"
 
-# Define a task based on a need that has emerged
-task = Task(
-    task_id="legal-analysis-001",
-    description="Summarize a 10-page legal contract and identify key risks.",
-    requirements={"domain": "legal", "minimum_confidence": 0.90},
-    budget={"max_cost": 0.50, "currency": "USD"}
-)
-
-# Run an auction to find a suitable agent
-auction_result = orchestrator.run_auction(task, timeout_seconds=10)
-
-print(f"Winning Bidder: {auction_result.winner.agent_id}")
-print(f"Stated Confidence: {auction_result.winner.confidence * 100:.0f}%")
-print(f"Quoted Cost: ${auction_result.winner.estimated_cost:.2f}")
-
-# Delegate the task to the most suitable agent found in the ecosystem
-# result = auction_result.execute()
-```
-
-#### The Worker Agent's Perspective
-```python
-from eax_marketplace import WorkerAgent, Bid, Capability
-
-# An example of a specialized worker agent
-class LegalAnalysisAgent(WorkerAgent):
-    def __init__(self):
-        super().__init__(
-            agent_id="LegalSummarizer-v3",
-            capabilities=[
-                Capability(name="legal_analysis", confidence=0.98),
-                Capability(name="risk_identification", confidence=0.95),
-            ]
-        )
+virtual_tools:
+  - name: broadcast_rfb
+    description: "Post Request for Bids to public bulletin"
     
-    def evaluate_and_bid(self, task: Task) -> Bid | None:
-        """My internal logic to decide if I should bid."""
-        if task.requirements.get("domain") == "legal":
-            # I am a good fit, so I will construct and return a bid
-            return Bid(
-                agent_id=self.agent_id,
-                task_id=task.id,
-                confidence=0.98,
-                estimated_cost=0.25,
-                reasoning="Specialized in legal contract analysis with high confidence."
-            )
-        return None # I am not a good fit for this task
+  - name: collect_bids  
+    description: "Gather bids from worker agents"
     
-    def execute_task(self, task: Task):
-        # My core logic for performing the task
-        return self.analyze_legal_document(task.content)
-
-# The agent joins the marketplace and listens for opportunities
-# agent = LegalAnalysisAgent()
-# agent.listen_for_tasks()
+  - name: evaluate_bids
+    description: "Compare bids on cost, time, reputation"
+    
+  - name: award_contract
+    description: "Notify winning agent to proceed"
 ```
 
-## Core Research Areas
+### Integration Flow Example
 
-### 1. The Open Auction Protocol
-We are developing a formal, JSON-based specification for agent-to-agent task negotiation. This protocol defines the `Task_Announcement` and `Bid` message structures, forming the basis for an open and interoperable agent economy.
+```yaml
+# 1. EAX Router receives a task and decides it needs bidding
+Router → Marketplace: "I have a legal document summarization task"
 
-### 2. Bid Evaluation Strategies
-How does an orchestrator choose the best bid? We are experimenting with pluggable evaluation strategies:
-- `LowestCost`: Purely price-driven.
-- `HighestConfidence`: For critical tasks where quality is paramount.
-- `BestValue`: A balanced approach considering cost, confidence, and other metadata.
-- `ReputationWeighted`: An advanced strategy that would factor in an agent's historical performance.
+# 2. Marketplace broadcasts Request for Bids
+Marketplace → All Agents: 
+  task_id: "legal-001"
+  type: "legal_summarization" 
+  requirements: "10 pages, bullet points"
+  budget: "$0.50"
+  deadline: "15 minutes"
 
-### 3. Agent Self-Awareness (`Capability` Schema)
-A key area of research is how agents can accurately represent their own capabilities. The `Capability` schema is our first step towards a standardized way for agents to "advertise" their skills and confidence levels.
+# 3. Specialized agents evaluate and bid
+Legal Expert Agent → Marketplace:
+  bid: "$0.25"
+  time: "8 minutes"
+  confidence: "0.95"
+  
+General Agent → Marketplace:
+  bid: "$0.40"
+  time: "12 minutes"
+  confidence: "0.75"
+
+# 4. Marketplace evaluates and awards
+Marketplace → Legal Expert: "You won! Please proceed with task legal-001"
+Marketplace → Router: "Task awarded to Legal Expert Agent"
+```
+
+### Worker Agent Configuration
+
+Worker agents participate in the marketplace by monitoring the message bus:
+
+```yaml
+# Legal Expert Agent's GEMINI.md
+agent_role: "Legal Document Specialist"
+specialization: "legal_analysis"
+
+marketplace_config:
+  monitor_channel: "#marketplace_rfbs"
+  bid_strategy: "selective"  # Only bid on legal tasks
+  
+capabilities:
+  legal_summarization: 0.95
+  contract_review: 0.98
+  regulatory_compliance: 0.92
+  
+pricing_model:
+  base_rate: 0.10  # per 1000 tokens
+  specialization_multiplier: 2.5  # Premium for expertise
+  urgency_surcharge: 1.5  # For rush jobs
+
+virtual_tools:
+  - name: evaluate_rfb
+    description: "Analyze if task matches our expertise"
+    
+  - name: calculate_bid
+    description: "Determine competitive pricing"
+    
+  - name: submit_bid
+    description: "Send bid to marketplace agent"
+```
+
+### Marketplace Dynamics
+
+The marketplace creates natural incentives:
+- **Specialization**: Agents develop expertise to win more bids
+- **Efficiency**: Competition drives down costs
+- **Quality**: Reputation tracking rewards good performance
+- **Resilience**: Multiple agents prevent single points of failure
+
+## Key Research Features
+
+### 📋 SAL-CP Compatible Messaging
+Marketplace communications use the SAL-CP protocol for rich agent-to-agent messaging:
+
+```json
+{
+  "protocol": "SAL-CP/v1",
+  "message_type": "REQUEST_FOR_BIDS",
+  "from": "marketplace-auctioneer",
+  "to": "#marketplace_broadcast",
+  "payload": {
+    "task_id": "research-001",
+    "description": "Analyze 5 AI papers for trends",
+    "requirements": {
+      "domain": "academic_research",
+      "output_format": "structured_analysis",
+      "deadline_minutes": 30
+    },
+    "auction_rules": {
+      "type": "sealed_bid",
+      "close_time": "2024-06-26T15:00:00Z",
+      "selection_criteria": "weighted_score"
+    }
+  },
+  "metadata": {
+    "cognitive_state": "EVALUATING_TASK",
+    "urgency": "medium",
+    "estimated_complexity": 7.5
+  }
+}
+```
+
+### 🏆 Reputation and Performance Tracking
+The marketplace maintains agent performance history:
+
+```yaml
+agent_reputation:
+  legal_expert_v3:
+    completed_tasks: 147
+    success_rate: 0.96
+    avg_bid_accuracy: 0.92  # Actual vs estimated cost
+    client_satisfaction: 4.8/5.0
+    specializations:
+      - legal_analysis: expert
+      - contract_review: expert
+      - patent_search: intermediate
 
 ## Research Roadmap
 
-Our goal is to create the foundational protocol for self-assembling agentic systems.
+### Phase 1: Foundation (Current)
+- [x] Marketplace agent architecture design
+- [x] Basic auction protocol via message bus
+- [ ] Integration with LLMunix messaging
+- [ ] Bid evaluation algorithms
+- [ ] Contract enforcement mechanisms
 
-### Phase 1: Protocol Foundation (Current)
-- [x] Basic auction protocol definition (`Task_Announcement`, `Bid`).
-- [x] Reference implementations in Python for `Orchestrator` and `Worker`.
-- [ ] Abstract the transport layer (e.g., HTTP, message queues).
-- [ ] Implement initial set of `BidEvaluator` strategies.
+### Phase 2: Economic Intelligence
+- [ ] Dynamic pricing models
+- [ ] Reputation-based bidding
+- [ ] Multi-attribute auctions
+- [ ] Task bundling and decomposition
+- [ ] Market maker agents
 
-### Phase 2: Advanced Marketplace Dynamics
-- [ ] Research and implement agent **reputation systems**.
-- [ ] Explore mechanisms for **complex task decomposition** and sub-auctions.
-- [ ] Investigate multi-round auctions and negotiation patterns.
+### Phase 3: Network Effects
+- [ ] Cross-marketplace arbitrage
+- [ ] Agent coalitions and teams
+- [ ] Futures markets for cognitive work
+- [ ] Quality insurance mechanisms
+- [ ] Decentralized dispute resolution
 
-### Phase 3: Ecosystem & Integration
-- [ ] Develop agent discovery mechanisms (a "yellow pages" for agents).
-- [ ] Integrate with the [EAX Protocol (SAL-CP)](https://github.com/EvolvingAgentsLabs/sal-cp) for richer communication during bidding and execution.
-- [ ] Standardize the `Capability` schema to interoperate with the `fingerprint.json` from the [EAX Router](https://github.com/EvolvingAgentsLabs/eax-router).
+## Citation
 
----
+If you use EAX Marketplace in your research, please cite:
+
+```bibtex
+@software{eax_marketplace_2024,
+  title={EAX Marketplace: Experimental Decentralized Agent Collaboration Protocol},
+  author={Molinas, Matias and Faro, Ismael},
+  year={2024},
+  organization={Evolving Agents Labs},
+  url={https://github.com/EvolvingAgentsLabs/eax-marketplace}
+}
+```
 
 ## Contributing
 
-This is a frontier research project. We invite you to contribute by:
-- Proposing changes or improvements to the auction protocol spec.
-- Developing new and more sophisticated `BidEvaluator` strategies.
-- Building example `Worker` agents with unique specializations.
-- Exploring different network transport layers for agent communication.
+We welcome contributions from researchers and developers:
 
-Please read our `CONTRIBUTING.md` for more details.
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/auction-strategy`)
+3. **Commit** your changes (`git commit -m 'Add reputation-based auction strategy'`)
+4. **Push** to the branch (`git push origin feature/auction-strategy`)
+5. **Open** a Pull Request
 
 ## License
 
-EAX Marketplace is licensed under the Apache 2.0 License.
+EAX Marketplace is licensed under the Apache 2.0 License. See [LICENSE](LICENSE) for details.
+
+---
 
 ## Connect
 
@@ -171,4 +247,4 @@ EAX Marketplace is licensed under the Apache 2.0 License.
 
 ---
 
-*EAX Marketplace is a core component of the experimental agent architecture being developed at [Evolving Agents Labs](https://evolvingagentslabs.github.io). Our goal is to build the foundational tools for truly intelligent and adaptive AI systems.*
+*Part of the EAX Protocol Suite from [Evolving Agents Labs](https://evolvingagentslabs.github.io) - Building the future of intelligent agents through experimental research*
